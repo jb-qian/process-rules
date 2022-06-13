@@ -1,32 +1,76 @@
 import Gojs from "gojs";
-import { elementStyle, textStyle, nodeStyle, rotateStyle, resizeStyle, selectStyle, resizeNodeConfig } from "./config";
+import { elementStyle, textStyle, thumbnailTextStyle, nodeStyle, rotateStyle, resizeStyle, selectStyle, resizeNodeConfig } from "./config";
 
 type NodeType = {
     key: string;
     text: string;
-    val: Gojs.Part;
+    node: Gojs.Part;
+    thumbnail: Gojs.Part;
 };
 
 const $ = Gojs.GraphObject.make;
 
+const getTextBlockConfig = (defatultText: string) => {
+    return {
+        wrap: Gojs.TextBlock.WrapFit,
+        textAlign: "center",
+        editable: true,
+        textEdited: (thisTextBlock: Gojs.TextBlock, _oldString: string, newString: string) => {
+            if (newString === "") {
+                thisTextBlock.text = defatultText;
+            }
+        },
+    } as const;
+};
+
 export const createStart = (): NodeType => {
     const key = "Start";
+    const defatultText = "开始";
+    const layout = "Auto";
+    const styles = [
+        ...nodeStyle(),
+        ...selectStyle(),
+        ...rotateStyle(),
+        ...resizeStyle(),
+    ];
+    const desiredSize = new Gojs.Size(60, 60);
     return {
         key,
-        text: "开始",
-        val: $(
+        text: defatultText,
+        thumbnail: $(
             Gojs.Node,
-            "Table",
-            nodeStyle(),
-            selectStyle(),
+            layout,
+            styles,
+            {
+                desiredSize: new Gojs.Size(40, 40),
+            },
             $(
                 Gojs.Panel,
-                "Spot",
-                $(Gojs.Shape, "Circle", {
-                    desiredSize: new Gojs.Size(60, 60),
+                layout,
+                $(Gojs.Shape, "Ellipse", {
                     ...elementStyle(),
                 }),
-                $(Gojs.TextBlock, key, textStyle(), new Gojs.Binding("text"))
+                $(Gojs.TextBlock, key, thumbnailTextStyle(), new Gojs.Binding("text"))
+            ),
+        ),
+        node: $(
+            Gojs.Node,
+            layout,
+            styles,
+            $(
+                Gojs.Panel,
+                layout,
+                ...resizeNodeConfig(),
+                {
+                    desiredSize: desiredSize,
+                },
+                $(Gojs.Shape, "Ellipse", elementStyle()),
+                $(
+                    Gojs.TextBlock,
+                    textStyle(),
+                    getTextBlockConfig(defatultText),
+                    new Gojs.Binding("text").makeTwoWay(),
+                )
             ),
             makePort("B", Gojs.Spot.Bottom, Gojs.Spot.Bottom, true, false)
         ),
@@ -35,22 +79,49 @@ export const createStart = (): NodeType => {
 
 export const createEnd = (): NodeType => {
     const key = "End";
+    const defatultText = "结束";
+    const layout = "Auto";
+    const styles = [
+        ...nodeStyle(),
+        ...selectStyle(),
+        ...rotateStyle(),
+        ...resizeStyle(),
+    ];
     return {
         key,
-        text: "结束",
-        val: $(
+        text: defatultText,
+        thumbnail: $(
             Gojs.Node,
-            "Table",
-            nodeStyle(),
-            selectStyle(),
+            layout,
+            styles,
+            {
+                desiredSize: new Gojs.Size(40, 40),
+            },
             $(
                 Gojs.Panel,
-                "Spot",
-                $(Gojs.Shape, "Circle", {
+                layout,
+                $(Gojs.Shape, "Ellipse", elementStyle()),
+                $(Gojs.TextBlock, key, thumbnailTextStyle(), new Gojs.Binding("text"))
+            ),
+        ),
+        node: $(
+            Gojs.Node,
+            layout,
+            styles,
+            $(
+                Gojs.Panel,
+                layout,
+                ...resizeNodeConfig(),
+                {
                     desiredSize: new Gojs.Size(60, 60),
-                    ...elementStyle(),
-                }),
-                $(Gojs.TextBlock, key, textStyle(), new Gojs.Binding("text"))
+                },
+                $(Gojs.Shape, "Ellipse", elementStyle()),
+                $(
+                    Gojs.TextBlock,
+                    textStyle(),
+                    getTextBlockConfig(defatultText),
+                    new Gojs.Binding("text").makeTwoWay(),
+                )
             ),
             makePort("T", Gojs.Spot.Top, Gojs.Spot.Top, false, true),
             makePort("L", Gojs.Spot.Left, Gojs.Spot.Left, false, true),
@@ -61,45 +132,55 @@ export const createEnd = (): NodeType => {
 
 export const createConditional = (): NodeType => {
     const key = "Conditional";
-    const defatult_text = "请输入";
+    const defatultText = "Y/N";
+    const layout = "Auto";
+    const Diamond = "Diamond";
+    const styles = [
+        ...nodeStyle(),
+        ...selectStyle(),
+        ...rotateStyle(),
+        ...resizeStyle(),
+    ];
     return {
         key,
-        text: defatult_text,
-        val: $(
+        text: defatultText,
+        thumbnail: $(
             Gojs.Node,
-            "Table",
-            nodeStyle(),
-            rotateStyle(),
-            resizeStyle(),
+            layout,
+            styles,
             $(
                 Gojs.Panel,
-                "Auto",
-                ...resizeNodeConfig(),
-                $(
-                    Gojs.Shape,
-                    "Diamond",
-                    {
-                        ...elementStyle(),
-                    },
-                    new Gojs.Binding("figure", "figure")
-                ),
+                layout,
+                {
+                    desiredSize: new Gojs.Size(60, 40),
+                },
+                $(Gojs.Shape, Diamond, elementStyle()),
                 $(
                     Gojs.TextBlock,
-                    textStyle(),
-                    {
-                        margin: new Gojs.Margin(5, 10, 5, 10),
-                        wrap: Gojs.TextBlock.WrapFit,
-                        editable: true,
-                        textEdited: (thisTextBlock: Gojs.TextBlock, _oldString: string, newString: string) => {
-                            if (newString === "") {
-                                thisTextBlock.text = defatult_text;
-                            }
-                        }
-                    },
+                    thumbnailTextStyle(),
                     new Gojs.Binding("text").makeTwoWay(),
                 )
             ),
-            // four named ports, one on each side:
+        ),
+        node: $(
+            Gojs.Node,
+            layout,
+            styles,
+            $(
+                Gojs.Panel,
+                layout,
+                ...resizeNodeConfig(),
+                {
+                    desiredSize: new Gojs.Size(90, 60),
+                },
+                $(Gojs.Shape, Diamond, elementStyle()),
+                $(
+                    Gojs.TextBlock,
+                    textStyle(),
+                    getTextBlockConfig(defatultText),
+                    new Gojs.Binding("text").makeTwoWay(),
+                )
+            ),
             makePort("T", Gojs.Spot.Top, Gojs.Spot.Top, false, true),
             makePort("L", Gojs.Spot.Left, Gojs.Spot.Left, true, true),
             makePort("R", Gojs.Spot.Right, Gojs.Spot.Right, true, true),
@@ -108,44 +189,55 @@ export const createConditional = (): NodeType => {
     };
 }
 
-export const createStep = () => {
+export const createStep = (): NodeType => {
     const key = "Step";
-    const defatult_text = "步骤";
+    const defatultText = "步骤";
+    const layout = "Auto";
+    const Rectangle = "Rectangle";
+    const styles = [
+        ...nodeStyle(),
+        ...selectStyle(),
+        ...rotateStyle(),
+        ...resizeStyle(),
+    ];
     return {
         key,
-        text: defatult_text,
-        val: $(
+        text: defatultText,
+        thumbnail: $(
             Gojs.Node,
-            "Table",
-            nodeStyle(),
-            rotateStyle(),
-            resizeStyle(),
+            layout,
+            styles,
+            {
+                desiredSize: new Gojs.Size(50, 30),
+            },
             $(
                 Gojs.Panel,
-                "Auto",
-                ...resizeNodeConfig(),
+                layout,
+                $(Gojs.Shape, Rectangle, elementStyle()),
                 $(
-                    Gojs.Shape,
-                    "Rectangle",
-                    {
-                        minSize: new Gojs.Size(70, 40),
-                        ...elementStyle(),
-                    },
-                    new Gojs.Binding("figure", "figure")
-                ),
+                    Gojs.TextBlock,
+                    thumbnailTextStyle(),
+                    new Gojs.Binding("text").makeTwoWay()
+                )
+            ),
+        ),
+        node: $(
+            Gojs.Node,
+            layout,
+            styles,
+            $(
+                Gojs.Panel,
+                layout,
+                ...resizeNodeConfig(),
+                {
+                    desiredSize: new Gojs.Size(90, 54),
+                },
+                $(Gojs.Shape, Rectangle, elementStyle()),
                 $(
                     Gojs.TextBlock,
                     textStyle(),
-                    {
-                        wrap: Gojs.TextBlock.WrapFit,
-                        editable: true,
-                        textEdited: (thisTextBlock: Gojs.TextBlock, _oldString: string, newString: string) => {
-                            if (newString === "") {
-                                thisTextBlock.text = defatult_text;
-                            }
-                        }
-                    },
-                    new Gojs.Binding("text").makeTwoWay()
+                    getTextBlockConfig(defatultText),
+                    new Gojs.Binding("text").makeTwoWay(),
                 )
             ),
             makePort("T", Gojs.Spot.Top, Gojs.Spot.TopSide, false, true),
@@ -158,7 +250,7 @@ export const createStep = () => {
 
 export const createLinkTemplate = () => {
     return $(
-        Gojs.Link, // the whole link panel
+        Gojs.Link,
         {
             routing: Gojs.Link.AvoidsNodes,
             curve: Gojs.Link.JumpOver,
@@ -168,16 +260,16 @@ export const createLinkTemplate = () => {
             relinkableTo: true,
             reshapable: true,
             resegmentable: true,
-            // mouse-overs subtly highlight links:
             mouseEnter: (e, link: any) =>
-                (link.findObject("HIGHLIGHT").stroke = "rgba(30,144,255,0.3)"),
+                (link.findObject("HIGHLIGHT").stroke = "rgba(30, 144, 255, 0.3)"),
             mouseLeave: (e, link: any) =>
                 (link.findObject("HIGHLIGHT").stroke = "transparent"),
             selectionAdorned: false,
         },
         new Gojs.Binding("points").makeTwoWay(),
         $(
-            Gojs.Shape, // the highlight shape, normally transparent
+            // 路径高亮
+            Gojs.Shape,
             {
                 isPanelMain: true,
                 strokeWidth: 8,
@@ -186,7 +278,8 @@ export const createLinkTemplate = () => {
             }
         ),
         $(
-            Gojs.Shape, // the link path shape
+            // 路径
+            Gojs.Shape,
             {
                 isPanelMain: true,
                 stroke: "gray",
@@ -197,7 +290,8 @@ export const createLinkTemplate = () => {
             ).ofObject()
         ),
         $(
-            Gojs.Shape, // the arrowhead
+            // 箭头
+            Gojs.Shape,
             {
                 toArrow: "standard",
                 strokeWidth: 0,
@@ -205,44 +299,75 @@ export const createLinkTemplate = () => {
             }
         ),
         $(
-            Gojs.Panel,
-            "Auto", // the link label, normally not visible
+            Gojs.TextBlock,
+            "条件", // the label
             {
-                visible: false,
-                name: "LABEL",
-                segmentIndex: 2,
-                segmentFraction: 0.5,
+                alignmentFocus: new Gojs.Spot(0, 1, -4, 4),
+                textAlign: "center",
+                font: "10pt helvetica, arial, sans-serif",
+                stroke: "#333333",
+                editable: true,
+                fromSpot: Gojs.Spot.Right,
             },
-            new Gojs.Binding("visible", "visible").makeTwoWay(),
-            $(
-                Gojs.Shape,
-                "RoundedRectangle", // the label shape
-                {
-                    fill: "#F8F8F8",
-                    strokeWidth: 0,
-                }
-            ),
-            $(
-                Gojs.TextBlock,
-                "Yes", // the label
-                {
-                    textAlign: "center",
-                    font: "10pt helvetica, arial, sans-serif",
-                    stroke: "#333333",
-                    editable: true,
-                },
-                new Gojs.Binding("text").makeTwoWay()
-            )
+            new Gojs.Binding("text").makeTwoWay()
         )
     );
 }
+
+export const creareDiagram = (element: HTMLDivElement) => {
+
+    function showLinkLabel(event: Gojs.DiagramEvent) {
+        const label = event.subject.findObject("LABEL");
+        if (label !== null) {
+            label.visible = event.subject.fromNode.data.category === "Conditional";
+        }
+    }
+
+    const GridConfig ={ stroke: "lightgray", strokeWidth: 0.5 };
+    return $(Gojs.Diagram, element, {
+        grid: $(Gojs.Panel, "Grid",
+            {
+                gridCellSize: new Gojs.Size(15, 15)
+            },
+            $(Gojs.Shape, "LineH", GridConfig),
+            $(Gojs.Shape, "LineV", GridConfig)
+        ),
+        "linkingTool.portGravity": 20,
+        "relinkingTool.portGravity": 20,
+        // 取消动画
+        "animationManager.initialAnimationStyle": Gojs.AnimationManager.None,
+        "draggingTool.isGridSnapEnabled": true,
+        "handlesDragDropForTopLevelParts": true,
+        // 定位旋转按钮
+        "rotatingTool.handleAngle": 270,
+        "rotatingTool.handleDistance": 30,
+        // 设置旋转角度
+        "rotatingTool.snapAngleMultiple": 15,
+        "rotatingTool.snapAngleEpsilon": 15,
+        LinkDrawn: showLinkLabel, // this DiagramEvent listener is defined below
+        LinkRelinked: showLinkLabel,
+        // 支持快捷键 撤回/前进等
+        "undoManager.isEnabled": true,
+    });
+}
+
+export const createPalette = (element: HTMLDivElement) => {
+    return $(Gojs.Palette, element, {
+        padding: new Gojs.Margin(20, 10, 20, 10),
+        "animationManager.initialAnimationStyle": Gojs.AnimationManager.None,
+    });
+};
+
+export const createOverview = (element: HTMLDivElement, observed: Gojs.Diagram) => {
+    return $(Gojs.Overview, element, { observed, contentAlignment: Gojs.Spot.Center });
+};
 
 export const makePort = (
     name: string,
     align: Gojs.Spot,
     spot: Gojs.Spot,
     output: boolean,
-    input: boolean
+    input: boolean,
 ) => {
     const horizontal =
         align.equals(Gojs.Spot.Top) || align.equals(Gojs.Spot.Bottom);
@@ -262,7 +387,7 @@ export const makePort = (
         fromLinkable: output, // declare whether the user may draw links from here
         toSpot: spot, // declare where links may connect at this port
         toLinkable: input, // declare whether the user may draw links to here
-        cursor: "pointer", // show a different cursor to indicate potential link point
+        cursor: "pointer", // show a different cursor to indicadte potential link point
         mouseEnter: (event: Gojs.InputEvent, port: any) => {
             // the PORT argument will be this Shape
             if (!event.diagram.isReadOnly) {

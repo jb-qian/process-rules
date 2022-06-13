@@ -10,11 +10,20 @@ import {
     createConditional,
     createStep,
     createLinkTemplate,
+    creareDiagram,
+    createPalette,
+    createOverview,
 } from "./utils/node";
 
+type Gonfig = {
+    palette: HTMLDivElement;
+    diagram: HTMLDivElement;
+    overview: HTMLDivElement | undefined | null;
+};
+
 class Render {
-    private $ = Gojs.GraphObject.make;
     private _diagram: Gojs.Diagram | null = null;
+    private _palette: Gojs.Palette | null = null;
     private diagramElement = createRenderElement();
     private paletteElement = createRenderElement();
 
@@ -25,53 +34,25 @@ class Render {
         createEnd(),
     ];
 
-    private palette: Gojs.Palette | null = null;
-
     private get diagram() {
         if (this._diagram === null) {
-            this._diagram = this.$(Gojs.Diagram, this.diagramElement, {
-                grid: this.$(
-                    Gojs.Panel,
-                    "Grid",
-                    { gridCellSize: new Gojs.Size(15, 15) },
-                    this.$(Gojs.Shape, "LineH", {
-                        stroke: "lightgray",
-                        strokeWidth: 0.5,
-                    }),
-                    this.$(Gojs.Shape, "LineV", { stroke: "lightgray", strokeWidth: 0.5 })
-                ),
-                "animationManager.initialAnimationStyle": Gojs.AnimationManager.None,
-                "draggingTool.isGridSnapEnabled": true,
-                handlesDragDropForTopLevelParts: true,
-                // 定位旋转按钮
-                "rotatingTool.handleAngle": 270,
-                "rotatingTool.handleDistance": 30,
-                // 设置旋转角度
-                "rotatingTool.snapAngleMultiple": 15,
-                "rotatingTool.snapAngleEpsilon": 15,
-                LinkDrawn: this.showLinkLabel, // this DiagramEvent listener is defined below
-                LinkRelinked: this.showLinkLabel,
-                // 支持快捷键 撤回/前进等
-                "undoManager.isEnabled": true,
-            });
+            this._diagram = creareDiagram(this.diagramElement);
         }
         return this._diagram;
     }
 
-    constructor(options: { palette: HTMLElement; diagram: HTMLElement }) {
-        initRenderElement(options.diagram, this.diagramElement);
-        initRenderElement(options.palette, this.paletteElement);
-    }
-
-    private addNodeTemplateMap(key: string, val: Gojs.Part) {
-        return this.diagram.nodeTemplateMap.add(key, val);
-    }
-
-    private showLinkLabel(event: Gojs.DiagramEvent) {
-        const label = event.subject.findObject("LABEL");
-        if (label !== null) {
-            label.visible = event.subject.fromNode.data.category === "Conditional";
+    private get palette() {
+        if (this._palette === null) {
+            this._palette = createPalette(this.paletteElement);
         }
+        return this._palette;
+    }
+
+    private config: Partial<Gonfig> = {};
+    constructor(config: Gonfig) {
+        this.config = config;
+        initRenderElement(config.diagram, this.diagramElement);
+        initRenderElement(config.palette, this.paletteElement);
     }
 
     /**
@@ -86,27 +67,23 @@ class Render {
         this.diagram.toolManager.relinkingTool.temporaryLink.routing =
             Gojs.Link.Orthogonal;
 
+        const diagramNodeTemplateMap = new Gojs.Map<string, Gojs.Part>();
+        const paletteNodeTemplateMap = new Gojs.Map<string, Gojs.Part>();
         this.nodes.forEach((node) => {
-            this.addNodeTemplateMap(node.key, node.val);
+            diagramNodeTemplateMap.set(node.key, node.node);
+            paletteNodeTemplateMap.set(node.key, node.thumbnail);
         });
+        this.diagram.nodeTemplateMap = diagramNodeTemplateMap;
+        this.palette.nodeTemplateMap = paletteNodeTemplateMap;
 
-        this.palette = this.$(
-            Gojs.Palette,
-            this.paletteElement,
-            {
-                padding: 20,
-                "animationManager.initialAnimationStyle": Gojs.AnimationManager.None,
-                nodeTemplateMap: this.diagram.nodeTemplateMap, // share the templates used by diagram
-                model: new Gojs.GraphLinksModel(
-                    this.nodes.map((node) => {
-                        return {
-                            category: node.key,
-                            text: node.text,
-                        };
-                    })
-                ),
-            },
-        );
+        this.palette.model = Gojs.Model.fromJson({
+            nodeDataArray: this.nodes.map(node => {
+                return {
+                    category: node.key,
+                    text: node.text,
+                }
+            }),
+        });
 
         this.diagram.model = Gojs.Model.fromJson({
             class: "Gojs.GraphLinksModel",
@@ -115,6 +92,31 @@ class Render {
             nodeDataArray: [],
             linkDataArray: [],
         });
+
+        this.config.overview && createOverview(this.config.overview, this.diagram);
+    }
+
+    /**
+     * fromJson
+     * 第一个参数建议用 jsonstring，因为 object 会被引用
+     */
+    public fromJson(...args: Parameters<typeof Gojs.Model.fromJson>) {
+        this.diagram.clear();
+        this.diagram.model = Gojs.Model.fromJson(...args);
+    }
+
+    /**
+     * toJSON
+     */
+    public toJSON() {
+        return JSON.parse(this.diagram.model.toJson());
+    }
+
+    /**
+     * zoomToFit
+     */
+    public zoomToFit() {
+        this.diagram.commandHandler.zoomToFit();
     }
 
     /**

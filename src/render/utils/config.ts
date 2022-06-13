@@ -9,6 +9,13 @@ export const textStyle = () => {
     } as const;
 }
 
+export const thumbnailTextStyle = () => {
+    return {
+        font: "bold 8pt Lato, Helvetica, Arial, sans-serif",
+        stroke: "#333",
+    } as const;
+}
+
 export const elementStyle = () => {
     return {
         fill: "#fff",
@@ -76,7 +83,6 @@ export const resizeStyle = () => {
             resizeObjectName: "PANEL",
             resizeAdornmentTemplate: nodeResizeAdornmentTemplate,
         },
-        ...selectStyle(),
     ] as const;
 }
 
